@@ -2,6 +2,7 @@ module Main where
 
 import qualified Data.ByteString as B
 import Data.Word (Word8)
+import System.Environment (getArgs)
 
 data Byte = B  Bool Bool Bool Bool Bool Bool Bool Bool   
           | B2 Bool Bool Bool Bool Bool Bool Bool Bool 
@@ -43,27 +44,24 @@ bytes2ToRegisters (str, bytes@(B2 _ _ _ _ _ _ d w True True a1 a2 a3 b1 b2 b3))
   | d      = Right (str <> " " <> thinReg a1 a2 a3 <> ", " <> thinReg b1 b2 b3, bytes)
   |      w = Right (str <> " " <> wideReg b1 b2 b3 <> ", " <> wideReg a1 a2 a3, bytes)
   | otherwise = Right (str <> " " <> thinReg b1 b2 b3 <> ", " <> thinReg a1 a2 a3, bytes)
+    where
+      wideReg False False False = "ax"
+      wideReg False False True = "cx"
+      wideReg False True False = "dx"
+      wideReg False True True = "bx"
+      wideReg True False False = "sp"
+      wideReg True False True = "bp"
+      wideReg True True False = "si"
+      wideReg True True True = "di"
+      thinReg False False False = "al"
+      thinReg False False True = "cl"
+      thinReg False True False = "dl"
+      thinReg False True True = "bl"
+      thinReg True False False = "lh"
+      thinReg True False True = "bh"
+      thinReg True True False = "sh"
+      thinReg True True True = "dh"
 bytes2ToRegisters _ = Left "Not 2 bytes"
-
-wideReg :: Bool -> Bool -> Bool -> String
-wideReg False False False = "ax"
-wideReg False False True = "cx"
-wideReg False True False = "dx"
-wideReg False True True = "bx"
-wideReg True False False = "sp"
-wideReg True False True = "bp"
-wideReg True True False = "si"
-wideReg True True True = "di"
-
-thinReg :: Bool -> Bool -> Bool -> String
-thinReg False False False = "al"
-thinReg False False True = "cl"
-thinReg False True False = "dl"
-thinReg False True True = "bl"
-thinReg True False False = "lh"
-thinReg True False True = "bh"
-thinReg True True False = "sh"
-thinReg True True True = "dh"
 
 printASM :: Either String (String, Byte) -> IO ()
 printASM (Left err) = print err
@@ -71,7 +69,8 @@ printASM (Right (asm, _)) = putStrLn $ "bits 16\n\n" <> asm
 
 main :: IO ()
 main = do 
-  contents <- B.readFile "../listing37" 
+  file <- fmap head getArgs
+  contents <- B.readFile file
   let op =   bytesToByte2 
          $   boolsToByte 
          .   wordToBinaryList [] 

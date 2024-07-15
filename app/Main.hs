@@ -281,7 +281,6 @@ main :: IO ()
 main = do
   file     <- fmap head getArgs
   contents <- B.readFile file
-  putStrLn $ concat $ (<>"\n") <$> concatMap show <$> bytesToBytes234 (boolsToByte . wordToBinList [] <$> byteStringToWords contents)
   let op =  foldr (\x acc -> (<>) <$> x <*> acc) (Right "") 
          $  registers
         <$> bytesToBytes234
